@@ -28,27 +28,7 @@
 </section>
 
 <div id="feed-container">
-  {% if posts %}
-  {% for post in posts %}
-  <article class="post-card">
-    <div class="post-top">
-      <div class="post-profile">
-        <span class="post-avatar">{{ post.username[0]|upper }}</span>
-        <div>
-          <strong>{{ post.username }}</strong>
-          <small>{{ post.created_at }}</small>
-        </div>
-      </div>
-      <span class="post-options">⋯</span>
-    </div>
-    <p>{{ post.message }}</p>
-  </article>
-  {% endfor %}
-  {% else %}
-  <div class="empty-state">
-    <p>Ainda não há posts. Seja o primeiro a publicar.</p>
-  </div>
-  {% endif %}
+  {% include 'feed_fragment.html' %}
 </div>
 
 <script>
@@ -92,6 +72,6 @@ document.addEventListener('click', function(event) {
   }
 });
 
-setInterval(refreshFeed, 5000);
+setInterval(refreshFeed, 2000);
 </script>
 {% endblock %}

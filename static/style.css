@@ -327,7 +327,7 @@ button:hover {
   display: none;
   position: absolute;
   right: 0;
-  top: 2rem;
+  top: calc(100% + 0.5rem);
   background: rgba(15, 23, 42, 0.98);
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 1rem;
@@ -335,6 +335,17 @@ button:hover {
   min-width: 10rem;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
   z-index: 20;
+}
+.post-menu::before {
+  content: "";
+  position: absolute;
+  top: -0.35rem;
+  right: 1rem;
+  width: 0;
+  height: 0;
+  border-left: 0.35rem solid transparent;
+  border-right: 0.35rem solid transparent;
+  border-bottom: 0.35rem solid rgba(15, 23, 42, 0.98);
 }
 
 .post-menu.visible {
