@@ -1,0 +1,28 @@
+{% if posts %}
+{% for post in posts %}
+<article class="post-card">
+  <div class="post-top">
+    <div class="post-profile">
+      <span class="post-avatar">{{ post.username[0]|upper }}</span>
+      <div>
+        <strong>{{ post.username }}</strong>
+        <small>{{ post.created_at }}</small>
+      </div>
+    </div>
+    <span class="post-options">⋯</span>
+  </div>
+  {% if post.message %}
+  <p>{{ post.message }}</p>
+  {% endif %}
+  {% if post.image_filename %}
+  <div class="post-image">
+    <img src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}" alt="Imagem do post" />
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>Ainda não há posts. Seja o primeiro a publicar.</p>
+</div>
+{% endif %}

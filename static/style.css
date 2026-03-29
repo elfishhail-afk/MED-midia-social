@@ -206,7 +206,8 @@ main {
 }
 
 .auth-form input,
-.post-form textarea {
+.post-form textarea,
+.post-form input[type="file"] {
   width: 100%;
   padding: 1rem 1.1rem;
   border: 1px solid rgba(148, 163, 184, 0.18);
@@ -215,13 +216,25 @@ main {
   color: #e5e7eb;
 }
 
+.file-label {
+  display: block;
+  margin: 1rem 0 0.5rem;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.post-form input[type="file"] {
+  padding: 0.8rem 1rem;
+}
+
 .auth-form input::placeholder,
 .post-form textarea::placeholder {
   color: #94a3b8;
 }
 
 .auth-form input:focus,
-.post-form textarea:focus {
+.post-form textarea:focus,
+.post-form input[type="file"]:focus {
   outline: none;
   border-color: #8b5cf6;
   box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
@@ -308,6 +321,17 @@ button:hover {
   margin: 0;
   color: #d1d5db;
   line-height: 1.8;
+}
+
+.post-image {
+  margin-top: 1rem;
+}
+
+.post-image img {
+  width: 100%;
+  border-radius: 1.25rem;
+  display: block;
+  object-fit: cover;
 }
 
 .empty-state {

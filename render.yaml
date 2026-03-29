@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: med-midia-social
+    env: docker
+    branch: main
+    autoDeploy: true
+    plan: free
+    dockerfilePath: Dockerfile

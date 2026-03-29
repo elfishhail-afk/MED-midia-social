@@ -1,6 +1,8 @@
 ﻿from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g, abort
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from uuid import uuid4
 import sqlite3
 import os
 import secrets
@@ -10,6 +12,10 @@ DB_PATH = os.path.join(BASE_DIR, "social.db")
 SECRET_FILE = os.path.join(BASE_DIR, ".secret_key")
 
 app = Flask(__name__)
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 def load_or_create_secret_key():
@@ -107,6 +113,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             message TEXT NOT NULL,
+            image_filename TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
@@ -116,9 +123,24 @@ def init_db():
     db.close()
 
 
+def add_image_column_if_missing():
+    db = sqlite3.connect(DB_PATH)
+    cursor = db.execute("PRAGMA table_info(posts)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if "image_filename" not in columns:
+        db.execute("ALTER TABLE posts ADD COLUMN image_filename TEXT")
+        db.commit()
+    cursor.close()
+    db.close()
+
+
 def ensure_database():
     if not os.path.exists(DB_PATH):
         init_db()
+    else:
+        add_image_column_if_missing()
+
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 
 ensure_database()
@@ -139,6 +161,21 @@ def inject_user():
     return {"user": g.get("user")}
 
 
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_image(file_storage):
+    if file_storage and file_storage.filename:
+        filename = secure_filename(file_storage.filename)
+        if filename and allowed_file(filename):
+            unique_name = f"{uuid4().hex}_{filename}"
+            path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
+            file_storage.save(path)
+            return unique_name
+    return None
+
+
 def login_required(view):
     @wraps(view)
     def wrapped_view(**kwargs):
@@ -150,7 +187,7 @@ def login_required(view):
 
 def get_posts():
     return query_db(
-        "SELECT posts.id, posts.message, posts.created_at, users.username "
+        "SELECT posts.id, posts.message, posts.image_filename, posts.created_at, users.username "
         "FROM posts JOIN users ON posts.user_id = users.id "
         "ORDER BY posts.created_at DESC"
     )
@@ -165,11 +202,11 @@ def create_user(username, password):
     db.commit()
 
 
-def add_post(user_id, message):
+def add_post(user_id, message, image_filename=None):
     db = get_db()
     db.execute(
-        "INSERT INTO posts (user_id, message) VALUES (?, ?)",
-        (user_id, message),
+        "INSERT INTO posts (user_id, message, image_filename) VALUES (?, ?, ?)",
+        (user_id, message, image_filename),
     )
     db.commit()
 
@@ -179,6 +216,13 @@ def add_post(user_id, message):
 def index():
     posts = get_posts()
     return render_template("index.html", posts=posts, stats={"posts_count": len(posts)})
+
+
+@app.route("/feed-fragment")
+@login_required
+def feed_fragment():
+    posts = get_posts()
+    return render_template("feed_fragment.html", posts=posts)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -248,15 +292,24 @@ def favicon():
 def create_post():
     validate_csrf()
     message = request.form.get("message", "").strip()
-    if not message:
-        flash("A post cannot be empty.", "error")
+    image_file = request.files.get("image")
+    image_filename = None
+
+    if image_file and image_file.filename:
+        if not allowed_file(image_file.filename):
+            flash("Invalid image format. Use PNG, JPG or GIF.", "error")
+            return redirect(url_for("index"))
+        image_filename = save_image(image_file)
+
+    if not message and not image_filename:
+        flash("A post must include text or an image.", "error")
         return redirect(url_for("index"))
 
     if len(message) > 500:
         flash("Post cannot be longer than 500 characters.", "error")
         return redirect(url_for("index"))
 
-    add_post(g.user["id"], message)
+    add_post(g.user["id"], message, image_filename)
     flash("Post created successfully.", "success")
     return redirect(url_for("index"))
 

@@ -36,10 +36,23 @@ Use `gunicorn` para executar o app em produção.
 
 - `Procfile` foi adicionado para plataformas compatíveis.
 - `Dockerfile` foi adicionado para deploy em conteiner.
+- `render.yaml` foi adicionado para facilitar o deploy no Render.
 
 ```bash
 gunicorn app:app --bind 0.0.0.0:$PORT
 ```
+
+### Deploy no Render
+
+1. Faça push do código para o GitHub.
+2. Acesse `https://render.com` e crie conta.
+3. Clique em **New** → **Web Service**.
+4. Conecte o repositório GitHub.
+5. O Render deve detectar `render.yaml` e usar o `Dockerfile`.
+6. Escolha a branch `main`.
+7. Crie o serviço e aguarde o deploy.
+
+Depois disso, o Render vai fornecer uma URL pública estável.
 
 > Nota: o túnel gratuito `serveo` ou `localhost.run` pode ser instável e gerar erro 502. O método mais seguro é hospedar em um serviço cloud.
 > Se o serveo não funcionar, use `python run_with_tunnel.py` ou `python serveo_tunnel.py` após instalar `pyngrok`.

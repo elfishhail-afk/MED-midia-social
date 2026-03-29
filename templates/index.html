@@ -12,15 +12,17 @@
   </div>
 </div>
 <section class="post-form">
-  <form action="{{ url_for('create_post') }}" method="post">
+  <form action="{{ url_for('create_post') }}" method="post" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <label for="message">Novo post</label>
-    <textarea id="message" name="message" rows="4" placeholder="Compartilhe algo com seus seguidores..." required></textarea>
+    <textarea id="message" name="message" rows="4" placeholder="Escreva algo ou envie uma imagem..."></textarea>
+    <label for="image" class="file-label">Imagem opcional</label>
+    <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/gif" />
     <button type="submit">Publicar</button>
   </form>
 </section>
 
-<section class="feed">
+<div id="feed-container">
   {% if posts %}
   {% for post in posts %}
   <article class="post-card">
@@ -42,5 +44,20 @@
     <p>Ainda não há posts. Seja o primeiro a publicar.</p>
   </div>
   {% endif %}
-</section>
+</div>
+
+<script>
+function refreshFeed() {
+  fetch("{{ url_for('feed_fragment') }}")
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('feed-container').innerHTML = html;
+    })
+    .catch(() => {
+      console.warn('Falha ao atualizar o feed.');
+    });
+}
+
+setInterval(refreshFeed, 5000);
+</script>
 {% endblock %}
