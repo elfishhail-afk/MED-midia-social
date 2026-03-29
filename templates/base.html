@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>M.E.D - Minha Espaço Digital</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container header-grid">
+        <div class="brand">
+          <div class="logo">M</div>
+          <div>
+            <h1>M.E.D</h1>
+            <p>Minha Espaço Digital</p>
+          </div>
+        </div>
+        <nav>
+          {% if user %}
+          <span>Olá, {{ user.username }}</span>
+          <a class="button-link" href="{{ url_for('logout') }}">Sair</a>
+          {% else %}
+          <a class="button-link primary" href="{{ url_for('login') }}">Entrar</a>
+          <a class="button-link" href="{{ url_for('register') }}">Registrar</a>
+          {% endif %}
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <section class="flash-list">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </section>
+      {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+      <div class="container">Feito com Flask - proteção básica contra XSS</div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+social.db
+instance/
+.env
+.secret_key
+serveo_url.txt

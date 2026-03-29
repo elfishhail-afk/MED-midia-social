@@ -1,0 +1,5 @@
+- [x] Verify the copilot-instructions.md file exists in the .github directory.
+- [ ] Scaffold a simple secure social media app in Flask.
+- [ ] Create README and basic configuration files.
+- [ ] Ensure templates use autoescaping and database queries are parameterized.
+- [ ] Keep the app runnable without XSS exposure.

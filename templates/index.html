@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>Linha do tempo</h2>
+    <p class="page-subtitle">Compartilhe ideias e acompanhe o que sua rede publicou.</p>
+  </div>
+  <div class="stats-card">
+    <span>{{ stats.posts_count }}</span>
+    <small>posts publicados</small>
+  </div>
+</div>
+<section class="post-form">
+  <form action="{{ url_for('create_post') }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+    <label for="message">Novo post</label>
+    <textarea id="message" name="message" rows="4" placeholder="Compartilhe algo com seus seguidores..." required></textarea>
+    <button type="submit">Publicar</button>
+  </form>
+</section>
+
+<section class="feed">
+  {% if posts %}
+  {% for post in posts %}
+  <article class="post-card">
+    <div class="post-top">
+      <div class="post-profile">
+        <span class="post-avatar">{{ post.username[0]|upper }}</span>
+        <div>
+          <strong>{{ post.username }}</strong>
+          <small>{{ post.created_at }}</small>
+        </div>
+      </div>
+      <span class="post-options">⋯</span>
+    </div>
+    <p>{{ post.message }}</p>
+  </article>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <p>Ainda não há posts. Seja o primeiro a publicar.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
