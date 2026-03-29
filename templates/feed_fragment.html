@@ -1,6 +1,6 @@
 {% if posts %}
 {% for post in posts %}
-<article class="post-card">
+<article class="post-card" id="post-{{ post.id }}">
   <div class="post-top">
     <div class="post-profile">
       <span class="post-avatar">{{ post.username[0]|upper }}</span>
@@ -9,8 +9,22 @@
         <small>{{ post.created_at }}</small>
       </div>
     </div>
-    <span class="post-options">⋯</span>
+    <div class="post-options-wrapper">
+      <span class="post-options" onclick="toggleMenu({{ post.id }})">⋯</span>
+      <div class="post-menu" id="post-menu-{{ post.id }}">
+        <button type="button" onclick="replyTo({{ post.id }}, {{ post.username|tojson }})">Responder</button>
+        {% if user and user.id == post.user_id %}
+        <form action="{{ url_for('delete_post', post_id=post.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <button type="submit">Apagar</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
   </div>
+  {% if post.parent_username %}
+  <div class="reply-info">Respondendo a <strong>{{ post.parent_username }}</strong></div>
+  {% endif %}
   {% if post.message %}
   <p>{{ post.message }}</p>
   {% endif %}

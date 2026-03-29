@@ -14,6 +14,11 @@
 <section class="post-form">
   <form action="{{ url_for('create_post') }}" method="post" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+    <input type="hidden" id="parent_id" name="parent_id" value="" />
+    <div class="reply-banner" id="reply-banner" style="display:none;">
+      Respondendo a <span id="reply-target"></span>
+      <button type="button" class="small-link" onclick="clearReply()">Cancelar</button>
+    </div>
     <label for="message">Novo post</label>
     <textarea id="message" name="message" rows="4" placeholder="Escreva algo ou envie uma imagem..."></textarea>
     <label for="image" class="file-label">Imagem opcional</label>
@@ -57,6 +62,35 @@ function refreshFeed() {
       console.warn('Falha ao atualizar o feed.');
     });
 }
+
+function toggleMenu(postId) {
+  document.querySelectorAll('.post-menu').forEach(menu => {
+    if (menu.id === 'post-menu-' + postId) {
+      menu.classList.toggle('visible');
+    } else {
+      menu.classList.remove('visible');
+    }
+  });
+}
+
+function replyTo(postId, username) {
+  document.getElementById('parent_id').value = postId;
+  document.getElementById('reply-target').textContent = username;
+  document.getElementById('reply-banner').style.display = 'flex';
+  document.getElementById('message').focus();
+}
+
+function clearReply() {
+  document.getElementById('parent_id').value = '';
+  document.getElementById('reply-banner').style.display = 'none';
+  document.getElementById('reply-target').textContent = '';
+}
+
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.post-options-wrapper')) {
+    document.querySelectorAll('.post-menu').forEach(menu => menu.classList.remove('visible'));
+  }
+});
 
 setInterval(refreshFeed, 5000);
 </script>

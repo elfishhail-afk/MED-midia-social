@@ -114,8 +114,10 @@ def init_db():
             user_id INTEGER NOT NULL,
             message TEXT NOT NULL,
             image_filename TEXT,
+            parent_id INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id)
+            FOREIGN KEY(user_id) REFERENCES users(id),
+            FOREIGN KEY(parent_id) REFERENCES posts(id)
         );
         """
     )
@@ -123,13 +125,15 @@ def init_db():
     db.close()
 
 
-def add_image_column_if_missing():
+def add_missing_columns():
     db = sqlite3.connect(DB_PATH)
     cursor = db.execute("PRAGMA table_info(posts)")
     columns = [row[1] for row in cursor.fetchall()]
     if "image_filename" not in columns:
         db.execute("ALTER TABLE posts ADD COLUMN image_filename TEXT")
-        db.commit()
+    if "parent_id" not in columns:
+        db.execute("ALTER TABLE posts ADD COLUMN parent_id INTEGER")
+    db.commit()
     cursor.close()
     db.close()
 
@@ -138,7 +142,7 @@ def ensure_database():
     if not os.path.exists(DB_PATH):
         init_db()
     else:
-        add_image_column_if_missing()
+        add_missing_columns()
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -187,8 +191,12 @@ def login_required(view):
 
 def get_posts():
     return query_db(
-        "SELECT posts.id, posts.message, posts.image_filename, posts.created_at, users.username "
-        "FROM posts JOIN users ON posts.user_id = users.id "
+        "SELECT posts.id, posts.user_id, posts.message, posts.image_filename, posts.parent_id, posts.created_at, users.username, "
+        "parent_users.username AS parent_username "
+        "FROM posts "
+        "JOIN users ON posts.user_id = users.id "
+        "LEFT JOIN posts AS parent_posts ON posts.parent_id = parent_posts.id "
+        "LEFT JOIN users AS parent_users ON parent_posts.user_id = parent_users.id "
         "ORDER BY posts.created_at DESC"
     )
 
@@ -202,11 +210,11 @@ def create_user(username, password):
     db.commit()
 
 
-def add_post(user_id, message, image_filename=None):
+def add_post(user_id, message, image_filename=None, parent_id=None):
     db = get_db()
     db.execute(
-        "INSERT INTO posts (user_id, message, image_filename) VALUES (?, ?, ?)",
-        (user_id, message, image_filename),
+        "INSERT INTO posts (user_id, message, image_filename, parent_id) VALUES (?, ?, ?, ?)",
+        (user_id, message, image_filename, parent_id),
     )
     db.commit()
 
@@ -292,6 +300,7 @@ def favicon():
 def create_post():
     validate_csrf()
     message = request.form.get("message", "").strip()
+    parent_id = request.form.get("parent_id")
     image_file = request.files.get("image")
     image_filename = None
 
@@ -309,8 +318,32 @@ def create_post():
         flash("Post cannot be longer than 500 characters.", "error")
         return redirect(url_for("index"))
 
-    add_post(g.user["id"], message, image_filename)
+    try:
+        parent_id = int(parent_id) if parent_id else None
+    except ValueError:
+        parent_id = None
+
+    add_post(g.user["id"], message, image_filename, parent_id)
     flash("Post created successfully.", "success")
+    return redirect(url_for("index"))
+
+
+@app.route("/delete-post/<int:post_id>", methods=["POST"])
+@login_required
+def delete_post(post_id):
+    validate_csrf()
+    post = query_db(
+        "SELECT id FROM posts WHERE id = ? AND user_id = ?",
+        (post_id, g.user["id"]),
+        one=True,
+    )
+    if post:
+        db = get_db()
+        db.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+        db.commit()
+        flash("Post apagado com sucesso.", "success")
+    else:
+        flash("Não foi possível apagar este post.", "error")
     return redirect(url_for("index"))
 
 
